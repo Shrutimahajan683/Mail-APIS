@@ -1,0 +1,84 @@
+const mongoose=require('mongoose')
+
+const mailSchema=new mongoose.Schema({
+    name:{
+        type:String,
+        required:true
+    },
+    email:{
+        type:String,
+        required:true
+    },
+    inbox:{
+        type:[{
+            person:{
+                type:String,
+                required:true
+            },
+            sub:{
+                type:String,
+                required:true
+            },
+            text:{
+                type:String,
+                required:false
+            },
+            reply:{
+                type:[{
+            person:{
+                type:String,
+                required:true
+            },
+            sub:{
+                type:String,
+                required:true
+            },
+            text:{
+                type:String,
+                required:false
+            },
+            
+        }],
+            required:false
+            }
+        }],
+        required:false
+    },
+    outbox:{
+        type:[{
+            person:{
+                type:String,
+                required:true
+            },
+            sub:{
+                type:String,
+                required:true
+            },
+            text:{
+                type:String,
+                required:false
+            },
+            reply:{
+                type:[{
+            person:{
+                type:String,
+                required:true
+            },
+            sub:{
+                type:String,
+                required:true
+            },
+            text:{
+                type:String,
+                required:false
+            },
+            
+        }],
+            required:false
+            }
+        }],
+        required:false
+    }
+})
+
+module.exports=mongoose.model('mail',mailSchema)
