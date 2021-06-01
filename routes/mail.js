@@ -1,3 +1,4 @@
+const { ObjectId } = require('bson')
 const express=require('express')
 const router=express.Router()
 const mail=require('../models/mail')
@@ -26,11 +27,31 @@ router.post('/',async(req,res)=>{
     }
 })
 
-router.get('/delete/:id',async(req,res)=>{
+router.get('/delete/inbox/:email/:id',async(req,res)=>{
     try{
-        mail.find({"_id":req.params.id}, function(err, result) { 
-            console.log(result)
-        });
+        mail.update({"email":req.params.email},{$pull:{"inbox":{"_id":ObjectId(req.params.id)}}},{multi:true},(err,result)=>{
+            if(result)
+            {
+                res.send("done")
+        }
+            else
+            res.send(err)
+        })
+    }catch(err){
+        res.send('error')
+    }
+})
+
+router.get('/delete/outbox/:email/:id',async(req,res)=>{
+    try{
+        mail.update({"email":req.params.email},{$pull:{"outbox":{"_id":ObjectId(req.params.id)}}},{multi:true},(err,result)=>{
+            if(result)
+            {
+                res.send("done")
+        }
+            else
+            res.send(err)
+        })
     }catch(err){
         res.send('error')
     }
@@ -38,9 +59,12 @@ router.get('/delete/:id',async(req,res)=>{
 
 router.post('/send/:sender/:receiver',(req,res)=>{
     try{
+        
         mail.findOne({"email":req.params.sender},(err,result)=>{
             if(err)
-            res.send(err)
+            {
+                res.send(err)
+            }
             else
             {
                 var r={
@@ -57,6 +81,7 @@ router.post('/send/:sender/:receiver',(req,res)=>{
             res.send(err)
             else
             {
+               
                 var r={
                     person:req.params.sender,
                     sub:req.body.sub,
@@ -72,19 +97,32 @@ router.post('/send/:sender/:receiver',(req,res)=>{
     }
 })
 
-router.get('/reply/:id',(req,res)=>{
+router.post('/reply/:email/:id',(req,res)=>{
     try{
-        mail.find({inbox: {$elemMatch: {_id:req.params.id}}},(err,result)=>{
-            var r={
-                person:result[0].email,
+        
+        mail.find({"inbox._id":req.params.id},(err,result)=>{
+            var r=result[0].inbox[0].person;
+            var s={
+                person:result[0].inbox[0].person,
                 sub:req.body.sub,
-                text:req.body.text
+                text:req.body.text,
             }
-            o=result[0].inbox;
-            o.reply.push(r);
-            result[0].save();
+            var y={
+                person:req.params.id,
+                sub:req.body.sub,
+                text:req.body.text,
+                }
+            mail.findOne({"email":r},(err,res)=>{
+            if(err)
+            res.send(err)
+            else
+            {
+                res.inbox.push(y)
+                res.save()
+            }
         })
-    }
+    })
+}
     catch(err){
       res.send('error')
     }
